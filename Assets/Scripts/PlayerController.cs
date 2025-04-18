@@ -6,85 +6,63 @@ namespace ShuffleShowdown
     {
         [Header("Movement Settings")]
         public float moveSpeed = 5.0f;
-        public float jumpForce = 5.0f;
+        public float acceleration = 15.0f;  // 加速度参数
+        public float deceleration = 20.0f;  // 减速度参数
         
         [Header("Ground Check")]
         public float groundCheckDistance = 0.1f;
-        public LayerMask groundLayer = -1; // Default to all layers
+        public LayerMask groundLayer = -1;
 
         private Rigidbody rb;
-        private bool isGrounded;
         private Vector3 moveDirection;
+        private Vector3 currentVelocity;
 
         private void Awake()
         {
             rb = GetComponent<Rigidbody>();
-            
-            // 防止玩家翻倒
-            rb.constraints = RigidbodyConstraints.FreezeRotation;
+            rb.constraints = RigidbodyConstraints.FreezeRotation | RigidbodyConstraints.FreezePositionY;
+            rb.useGravity = false; // 在俯视角游戏中通常不需要重力
         }
 
         private void Update()
         {
-            // 检测地面
-            CheckGrounded();
-            
             // 获取输入
             float horizontalInput = Input.GetAxisRaw("Horizontal");
             float verticalInput = Input.GetAxisRaw("Vertical");
             
-            // 计算移动方向（相对于相机）
+            // 计算移动方向
             moveDirection = new Vector3(horizontalInput, 0, verticalInput).normalized;
-            
-            // 跳跃
-            if (Input.GetKeyDown(KeyCode.Space) && isGrounded)
-            {
-                Jump();
-            }
         }
 
         private void FixedUpdate()
         {
-            // 移动玩家
             Move();
         }
 
         private void Move()
         {
+            Vector3 targetVelocity = moveDirection * moveSpeed;
+            
+            // 平滑应用速度变化
             if (moveDirection != Vector3.zero)
             {
-                // 计算目标速度
-                Vector3 targetVelocity = moveDirection * moveSpeed;
-                
-                // 保持Y轴速度不变（保留重力影响）
-                targetVelocity.y = rb.linearVelocity.y;
-                
-                // 应用速度
-                rb.linearVelocity = targetVelocity;
-                
-                // 让玩家朝向移动方向
-                if (moveDirection != Vector3.zero)
-                {
-                    transform.forward = moveDirection;
-                }
+                // 加速
+                currentVelocity = Vector3.Lerp(currentVelocity, targetVelocity, acceleration * Time.fixedDeltaTime);
             }
-        }
-
-        private void Jump()
-        {
-            // 向上施加力
-            rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
-        }
-
-        private void CheckGrounded()
-        {
-            // 从玩家位置向下发射射线检测地面
-            isGrounded = Physics.Raycast(
-                transform.position, 
-                Vector3.down, 
-                groundCheckDistance + 0.1f, // Capsule height/2 + 检测距离
-                groundLayer
-            );
+            else
+            {
+                // 减速至停止
+                currentVelocity = Vector3.Lerp(currentVelocity, Vector3.zero, deceleration * Time.fixedDeltaTime);
+            }
+            
+            // 应用计算出的速度
+            rb.linearVelocity = currentVelocity;
+            
+            // 让玩家朝向移动方向 (只有在移动时才改变方向)
+            if (moveDirection != Vector3.zero)
+            {
+                transform.forward = moveDirection;
+            }
         }
     }
 }
