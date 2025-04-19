@@ -16,12 +16,17 @@ namespace ShuffleShowdown
         private Rigidbody rb;
         private Vector3 moveDirection;
         private Vector3 currentVelocity;
+        
+        // 添加调试信息
+        public bool showDebug = true;
 
         private void Awake()
         {
             rb = GetComponent<Rigidbody>();
             rb.constraints = RigidbodyConstraints.FreezeRotation | RigidbodyConstraints.FreezePositionY;
             rb.useGravity = false; // 在俯视角游戏中通常不需要重力
+            
+            Debug.Log("PlayerController初始化完成");
         }
 
         private void Update()
@@ -32,6 +37,12 @@ namespace ShuffleShowdown
             
             // 计算移动方向
             moveDirection = new Vector3(horizontalInput, 0, verticalInput).normalized;
+            
+            // 显示调试信息
+            if (showDebug && (horizontalInput != 0 || verticalInput != 0))
+            {
+                Debug.Log($"输入值: 水平={horizontalInput}, 垂直={verticalInput}, 方向={moveDirection}");
+            }
         }
 
         private void FixedUpdate()
@@ -48,6 +59,11 @@ namespace ShuffleShowdown
             {
                 // 加速
                 currentVelocity = Vector3.Lerp(currentVelocity, targetVelocity, acceleration * Time.fixedDeltaTime);
+                
+                if (showDebug)
+                {
+                    Debug.Log($"速度: 目标={targetVelocity}, 当前={currentVelocity}");
+                }
             }
             else
             {
