@@ -4,29 +4,26 @@ namespace ShuffleShowdown
 {
     public class PlayerController : MonoBehaviour
     {
-        [Header("Movement Settings")]
-        public float moveSpeed = 5.0f;
-        public float acceleration = 15.0f;  // 加速度参数
-        public float deceleration = 20.0f;  // 减速度参数
+        [Header("移动设置")]
+        public float moveSpeed = 8.0f;  // 增加默认速度，补偿去掉加速度后的感觉
         
-        [Header("Ground Check")]
-        public float groundCheckDistance = 0.1f;
-        public LayerMask groundLayer = -1;
+        [Header("调试")]
+        public bool showDebug = false;
 
         private Rigidbody rb;
         private Vector3 moveDirection;
-        private Vector3 currentVelocity;
-        
-        // 添加调试信息
-        public bool showDebug = true;
 
         private void Awake()
         {
             rb = GetComponent<Rigidbody>();
             rb.constraints = RigidbodyConstraints.FreezeRotation | RigidbodyConstraints.FreezePositionY;
-            rb.useGravity = false; // 在俯视角游戏中通常不需要重力
+            rb.useGravity = false;
             
-            Debug.Log("PlayerController初始化完成");
+            // 确保在Player层
+            gameObject.layer = LayerMask.NameToLayer("Player");
+            
+            if (showDebug)
+                Debug.Log("PlayerController初始化完成");
         }
 
         private void Update()
@@ -52,32 +49,35 @@ namespace ShuffleShowdown
 
         private void Move()
         {
-            Vector3 targetVelocity = moveDirection * moveSpeed;
-            
-            // 平滑应用速度变化
+            // 直接应用速度，不使用加速度/减速度
             if (moveDirection != Vector3.zero)
             {
-                // 加速
-                currentVelocity = Vector3.Lerp(currentVelocity, targetVelocity, acceleration * Time.fixedDeltaTime);
+                // 直接设置速度
+                Vector3 velocity = moveDirection * moveSpeed;
+                rb.linearVelocity = velocity;
+                
+                // 让玩家朝向移动方向
+                transform.forward = moveDirection;
                 
                 if (showDebug)
                 {
-                    Debug.Log($"速度: 目标={targetVelocity}, 当前={currentVelocity}");
+                    Debug.Log($"速度: {velocity}");
                 }
             }
             else
             {
-                // 减速至停止
-                currentVelocity = Vector3.Lerp(currentVelocity, Vector3.zero, deceleration * Time.fixedDeltaTime);
+                // 当没有输入时立即停止
+                rb.linearVelocity = Vector3.zero;
             }
-            
-            // 应用计算出的速度
-            rb.linearVelocity = currentVelocity;
-            
-            // 让玩家朝向移动方向 (只有在移动时才改变方向)
-            if (moveDirection != Vector3.zero)
+        }
+        
+        // 防止其他物体推动玩家
+        private void OnCollisionEnter(Collision collision)
+        {
+            // 如果碰撞到的是敌人，忽略物理反应
+            if (collision.gameObject.layer == LayerMask.NameToLayer("Enemy"))
             {
-                transform.forward = moveDirection;
+                Physics.IgnoreCollision(collision.collider, GetComponent<Collider>());
             }
         }
     }
