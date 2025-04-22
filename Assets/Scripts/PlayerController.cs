@@ -5,7 +5,7 @@ namespace ShuffleShowdown
     public class PlayerController : MonoBehaviour
     {
         [Header("移动设置")]
-        public float moveSpeed = 8.0f;  // 增加默认速度，补偿去掉加速度后的感觉
+        public float moveSpeed = 8.0f;
         
         [Header("调试")]
         public bool showDebug = false;
@@ -33,7 +33,13 @@ namespace ShuffleShowdown
             float verticalInput = Input.GetAxisRaw("Vertical");
             
             // 计算移动方向
-            moveDirection = new Vector3(horizontalInput, 0, verticalInput).normalized;
+            moveDirection = new Vector3(horizontalInput, 0, verticalInput);
+            
+            // 归一化处理 - 确保斜角移动时速度不会更快
+            if (moveDirection.magnitude > 0)
+            {
+                moveDirection.Normalize();
+            }
             
             // 显示调试信息
             if (showDebug && (horizontalInput != 0 || verticalInput != 0))
