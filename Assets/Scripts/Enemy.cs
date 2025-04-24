@@ -23,25 +23,24 @@ namespace ShuffleShowdown
         private Vector3 moveDirection;
         private float damageInterval = 0.5f; // 造成伤害的时间间隔
         private float lastDamageTime = 0f;
+        private EnemyHealth healthComponent;
         
         private void Awake()
         {
             rb = GetComponent<Rigidbody>();
-            rb.constraints = RigidbodyConstraints.FreezeRotation | RigidbodyConstraints.FreezePositionY;
-            rb.useGravity = false;
-            rb.isKinematic = true; // 设置为运动学，不受物理系统影响
+            healthComponent = GetComponent<EnemyHealth>();
             
-            // 确保在Enemy层
-            gameObject.layer = LayerMask.NameToLayer("Enemy");
-            
-            // 修改碰撞体为触发器
-            Collider[] colliders = GetComponents<Collider>();
-            foreach (Collider col in colliders)
+            // 如果没有找到EnemyHealth组件，尝试添加一个
+            if (healthComponent == null)
             {
-                col.isTrigger = true;
+                healthComponent = gameObject.AddComponent<EnemyHealth>();
+                Debug.Log("敌人添加了健康组件");
             }
-            
-            // 如果没有指定目标，默认寻找玩家
+        }
+        
+        private void Start()
+        {
+            // 尝试找到目标（如果未手动设置）
             if (target == null)
             {
                 GameObject player = GameObject.FindGameObjectWithTag("Player");
@@ -49,6 +48,13 @@ namespace ShuffleShowdown
                 {
                     target = player.transform;
                 }
+            }
+            
+            // 同步健康值
+            if (healthComponent != null)
+            {
+                healthComponent.maxHealth = health;
+                healthComponent.currentHealth = health;
             }
         }
         
@@ -58,21 +64,16 @@ namespace ShuffleShowdown
             {
                 // 计算朝向玩家的方向
                 moveDirection = (target.position - transform.position).normalized;
-                moveDirection.y = 0; // 确保只在水平面上移动
                 
+                // 可视化（调试）
                 if (showDebug)
                 {
-                    Debug.DrawRay(transform.position, moveDirection * 2f, Color.red);
+                    Debug.DrawRay(transform.position, moveDirection * 5f, Color.red);
                 }
             }
         }
         
         private void FixedUpdate()
-        {
-            Move();
-        }
-        
-        private void Move()
         {
             if (target != null)
             {
@@ -93,18 +94,27 @@ namespace ShuffleShowdown
         // 当敌人受到伤害时调用
         public void TakeDamage(float amount)
         {
+            // 更新内部健康值
             health -= amount;
             
-            if (health <= 0)
+            Debug.Log("敌人受到 " + amount + " 点伤害，剩余生命值: " + health);
+            
+            // 如果有健康组件，则使用它来处理伤害
+            if (healthComponent != null)
+            {
+                healthComponent.TakeDamage(amount);
+            }
+            else if (health <= 0)
             {
                 Die();
             }
         }
         
         // 敌人死亡
-        private void Die()
+        public void Die()
         {
             // 加分或触发其他事件
+            Debug.Log("敌人死亡");
             
             // 销毁敌人对象
             Destroy(gameObject);
@@ -119,8 +129,13 @@ namespace ShuffleShowdown
                 PlayerHealth playerHealth = other.GetComponent<PlayerHealth>();
                 if (playerHealth != null)
                 {
+                    Debug.Log("敌人开始对玩家造成 " + damage + " 点伤害");
                     playerHealth.TakeDamage(damage);
                     lastDamageTime = Time.time;
+                }
+                else
+                {
+                    Debug.LogError("找不到玩家的PlayerHealth组件!");
                 }
             }
         }
