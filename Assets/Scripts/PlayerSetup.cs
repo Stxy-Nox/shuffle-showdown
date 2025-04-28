@@ -15,6 +15,7 @@ namespace ShuffleShowdown
         {
             SetupPlayerModel();
             SetupCamera();
+            SetupWeaponSystem();
         }
         
         private void SetupPlayerModel()
@@ -63,6 +64,20 @@ namespace ShuffleShowdown
                 }
                 cameraFollow.target = transform;
             }
+        }
+        
+        private void SetupWeaponSystem()
+        {
+            // 检查玩家是否已有武器管理器
+            PlayerWeaponManager weaponManager = GetComponent<PlayerWeaponManager>();
+            if (weaponManager == null)
+            {
+                // 添加武器管理器组件
+                weaponManager = gameObject.AddComponent<PlayerWeaponManager>();
+            }
+            
+            // 这里可以初始化武器管理器的其他设置
+            // 比如设置武器挂载点，或者添加初始武器
         }
     }
 }
