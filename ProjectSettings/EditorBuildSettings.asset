@@ -6,8 +6,14 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/Scenes/SampleScene.unity
-    guid: 99c9720ab356a0642a771bea13969a05
+    path: Assets/Scenes/MainMenu.unity
+    guid: 58922c5d67180b84db0473008394c422
+  - enabled: 1
+    path: Assets/Scenes/BulletHellGame.unity
+    guid: aead7fc4e0df4fa48b0b31f23a3e7b29
+  - enabled: 1
+    path: Assets/Scenes/GameOver.unity
+    guid: 5eb6ebd0ec7dd5345ba09ba8d3ab67e0
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   m_UseUCBPForAssetBundles: 0
